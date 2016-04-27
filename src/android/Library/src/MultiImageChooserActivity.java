@@ -141,18 +141,35 @@ public class MultiImageChooserActivity extends AppCompatActivity implements
 
         colWidth = width / 4;
 
-        GridView gridView = (GridView) findViewById(fakeR.getId("id", "gridview"));
+        final GridView gridView = (GridView) findViewById(fakeR.getId("id", "gridview"));
         gridView.setOnItemClickListener(this);
         gridView.setOnScrollListener(new OnScrollListener() {
             private int lastFirstItem = 0;
             private long timestamp = System.currentTimeMillis();
+
+            // Check: http://stackoverflow.com/questions/33619453/scrollbar-touch-area-in-android-6/34929010#34929010
+            // Fixes the issue of fast-scrolling being too sensitive
+            private int mCurrentState = 0;
 
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
                 if (scrollState == SCROLL_STATE_IDLE) {
                     shouldRequestThumb = true;
                     ia.notifyDataSetChanged();
+/* // @SK: Attempt to disable fastscroll not really working
+                    if( mCurrentState != scrollState && gridView.isFastScrollEnabled()){
+
+                        gridView.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                gridView.setFastScrollEnabled(false);
+                            }
+                        },500);   // Disable fast scroll 0.5s after the user stopped scrolling
+
+                    }
+*/
                 }
+                mCurrentState = scrollState;
             }
 
             @Override
@@ -166,6 +183,14 @@ public class MultiImageChooserActivity extends AppCompatActivity implements
                     // Limit if we go faster than a page a second
                     shouldRequestThumb = speed < visibleItemCount;
                 }
+                // Re-enable fast-scrolling if the user starts scrolling
+                /* @SK: Not really working
+                if (mCurrentState == SCROLL_STATE_TOUCH_SCROLL) {
+                        if (!gridView.isFastScrollEnabled())
+                            gridView.setFastScrollEnabled(true);
+                }
+                */
+
             }
         });
 
